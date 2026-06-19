@@ -1,20 +1,10 @@
 # Py-Async-Worker
 
-## Overview
-Background task processor simulator.
+Concurrent async job queue with configurable worker pool concurrency.
 
-Developed as part of my portfolio showcasing 5 years of software engineering experience. This project demonstrates clean architecture, proper error handling, and production-ready Python patterns.
-
-## Quick Start (1-Click Build)
+## Quick Start
 
 ```bash
-git clone https://github.com/skylerblue333/Py-Async-Worker.git
-cd Py-Async-Worker
 pip install -r requirements.txt
-python main.py
+pytest tests/ -v
 ```
-
-## Features
-- Clean, maintainable codebase
-- Proper logging and error handling
-- Zero complex configuration required
