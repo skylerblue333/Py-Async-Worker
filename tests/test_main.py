@@ -1,17 +1,18 @@
 from fastapi.testclient import TestClient
 from src.main import app
 
-def test_health():
-    with TestClient(app) as client:
-        response = client.get("/health")
-        assert response.status_code == 200
-        assert response.json()["status"] == "ok"
-        assert response.json()["ready"] == True
+client = TestClient(app)
 
-def test_process():
-    with TestClient(app) as client:
-        response = client.post("/api/v1/process", json={"test": "data"})
-        assert response.status_code == 200
-        data = response.json()
-        assert data["status"] == "success"
-        assert data["domain"] == "worker"
+def test_health():
+    response = client.get("/health")
+    assert response.status_code == 200
+    assert response.json()["status"] == "healthy"
+
+def test_create_and_get_task():
+    r1 = client.post("/api/v1/tasks", json={"name": "email", "payload": {"to": "a@b.com"}})
+    assert r1.status_code == 200
+    tid = r1.json()["task_id"]
+    r2 = client.get(f"/api/v1/tasks/{tid}")
+    assert r2.status_code == 200
+    assert r2.json()["name"] == "email"
+

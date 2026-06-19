@@ -2,17 +2,11 @@
 
 ![CI](https://github.com/skylerblue333/Py-Async-Worker/workflows/CI/badge.svg)
 
-Production-ready backend service for worker operations.
-
-## Architecture
-- **API Framework**: FastAPI
-- **Concurrency**: Asyncio event loop
-- **Testing**: Pytest with 100% coverage
-- **Deployment**: Docker containerized
+Asynchronous background task processing worker built with FastAPI.
 
 ## Quick Start
 ```bash
 pip install -r requirements.txt
-pytest tests/ -v
+pytest tests/
 uvicorn src.main:app --reload
 ```

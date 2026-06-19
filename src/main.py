@@ -1,34 +1,30 @@
-from fastapi import FastAPI
-import asyncio
+"""
+Py-Async-Worker: Asynchronous background task processing worker
+"""
 import time
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
 
-app = FastAPI(title="Py-Async-Worker API", version="2.0.0")
+app = FastAPI(title="Py-Async-Worker", version="3.0.0")
 
-class Processor:
-    def __init__(self):
-        self.ready = False
-        self.items_processed = 0
-        
-    async def initialize(self):
-        await asyncio.sleep(0.1)
-        self.ready = True
-        
-    def process(self, data: dict) -> dict:
-        if not self.ready:
-            raise RuntimeError("Not initialized")
-        self.items_processed += 1
-        return {"status": "success", "processed": True, "domain": "worker", "data": data}
+tasks = {}
+class TaskReq(BaseModel):
+    name: str
+    payload: dict
 
-processor = Processor()
+@app.post("/api/v1/tasks")
+async def create_task(req: TaskReq):
+    task_id = f"task_{int(time.time()*1000)}"
+    tasks[task_id] = {"name": req.name, "status": "pending", "payload": req.payload}
+    return {"task_id": task_id, "status": "pending"}
 
-@app.on_event("startup")
-async def startup():
-    await processor.initialize()
+@app.get("/api/v1/tasks/{task_id}")
+async def get_task(task_id: str):
+    if task_id not in tasks:
+        raise HTTPException(status_code=404, detail="Task not found")
+    return tasks[task_id]
+
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "ready": processor.ready, "processed": processor.items_processed}
-
-@app.post("/api/v1/process")
-def process_data(payload: dict):
-    return processor.process(payload)
+    return {"status": "healthy", "service": "Py-Async-Worker", "timestamp": int(time.time())}
