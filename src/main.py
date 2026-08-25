@@ -125,6 +125,9 @@ async def worker() -> None:
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
+    global store, queue
+    store = TaskStore(MAX_TASKS)
+    queue = asyncio.Queue(maxsize=QUEUE_CAPACITY)
     workers = [asyncio.create_task(worker()) for _ in range(WORKER_CONCURRENCY)]
     try:
         yield
