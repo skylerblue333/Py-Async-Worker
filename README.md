@@ -1,44 +1,56 @@
-<!-- PORTFOLIO PROJECT PROFILE: maintained by the repository owner -->
+# Sky Async Worker
 
-## Project profile and code-audit snapshot
+**Status: engineering beta.** A bounded Python/FastAPI asyncio task service with explicit built-in operations and observable task lifecycle state.
 
-**What this is:** **Py-Async-Worker** is a public repository described as: “Background task processor simulator. #SkyCoin4444 #AI #Blockchain #DevOps #Innovation” Its dominant language signals are **Python (4 files)**.
+## Implemented behavior
 
-**Why it has value:** Its value is best understood through the implementation evidence currently present in the repository: **18 tracked files** were observed in the shallow audit, with the source structure and existing documentation providing the project’s specific context. This README does not treat a prototype, experiment, or archive as a production system without supporting evidence.
+- bounded in-memory task retention and queue capacity
+- configurable worker concurrency
+- UUID task identifiers
+- lifecycle states: `queued`, `running`, `succeeded`, `failed`
+- allow-listed operations only: `echo`, `uppercase`, and numeric `sum`
+- payload-size limits and per-operation validation
+- health/readiness endpoints with queue/task counts
+- real asynchronous workers started through the FastAPI lifespan
+- tests for successful execution, validation failure, unsupported operations, oversized payloads, readiness, and missing tasks
+- CI gates for compile, Ruff, pytest, dependency audit, Docker build, non-root runtime, and container health smoke testing
 
-**Implementation evidence:** 2 test-related file(s) detected; 2 dependency or package manifest(s) detected; 2 build/CI/infrastructure signal(s) detected; and 3 documentation or governance file(s) detected. Test filenames observed include `tests/__init__.py`, `tests/test_main.py`. Dependency or package files include `package.json`, `requirements.txt`. Build, CI, or infrastructure signals include `Dockerfile`, `.github/workflows/ci.yml`.
+## Run
 
-**Current status:** The repository is tracked on the `main` branch. The existing source tree, configuration, tests, workflows, and documentation remain authoritative for supported behavior and maturity. A code audit is not a production-readiness certification, and the presence of a test or workflow file does not establish that all checks pass.
+```bash
+python -m pip install -r requirements-dev.txt
+pytest -q
+uvicorn src.main:app --host 127.0.0.1 --port 8080
+```
 
-**Relationship to the wider portfolio:** This repository is one focused component of the broader Skyler Blue Spillers portfolio across AI, software engineering, cloud and DevOps, cybersecurity, blockchain, finance, education, social systems, and creative work. It may provide a service boundary, implementation pattern, experiment, archive, or reusable idea for related repositories. Treat repositories as technical dependencies only where documented interfaces and verified project requirements support that relationship.
+Create a task:
 
-**Quality and security note:** No obvious secret-like pattern was detected by the limited static scan; this is not a substitute for a security audit. No TODO/FIXME marker was detected in the scanned text files.
+```bash
+curl -X POST http://127.0.0.1:8080/api/v1/tasks \
+  -H 'content-type: application/json' \
+  -d '{"operation":"sum","payload":{"values":[1,2,3]}}'
+```
 
----
+Read the returned task ID:
 
-# Py Async Worker
+```bash
+curl http://127.0.0.1:8080/api/v1/tasks/<task-id>
+```
 
-![GitHub stars](https://img.shields.io/github/stars/skylerblue333/Py-Async-Worker?style=flat-square)
-![GitHub license](https://img.shields.io/github/license/skylerblue333/Py-Async-Worker?style=flat-square)
+## Configuration
 
-## 🌟 Overview
-**Py-Async-Worker** is a professional-grade project within the **SkyCoin4444** ecosystem. It focuses on delivering high-value solutions in the domain of **Python**.
+- `MAX_TASKS` defaults to `1000`
+- `QUEUE_CAPACITY` defaults to `256`
+- `WORKER_CONCURRENCY` defaults to `4`
 
-## 🚀 Key Features
-- **Scalable Architecture**: Designed for enterprise-level growth and performance.
-- **Modern Standards**: Implements best practices for clean code and maintainability.
-- **Robust Integration**: Built to work seamlessly within modern cloud-native environments.
+Invalid configuration fails closed during startup.
 
-## 🛠️ Technology Stack
-- **Primary Domain**: Python
-- **Ecosystem**: SkyCoin4444 Digital Platform
+## SKYCOIN4444 integration
 
-## 📂 Structure
-The project is organized into a modular structure to ensure clarity and ease of development.
+The service can provide a small asynchronous execution boundary for approved deterministic background operations in development or single-node deployments. Larger ecosystem jobs should integrate through explicit operation adapters rather than allowing requests to supply Python modules, shell commands, URLs, or executable code.
 
-## 👨‍💻 Author
-**Skyler Blue Spillers**
-*Professional Chess Player & Software Engineer*
+## Explicit limitations
 
----
-*Powered by SkyCoin4444*
+Task and queue state are process-local and disappear on restart. This repository is not Celery, Temporal, Sidekiq, a durable queue, a distributed worker fleet, or an arbitrary-code runner. It does not provide persistence, retries, scheduled jobs, exactly-once delivery, authentication, authorization, tenant isolation, distributed locking, HA, or production deployment.
+
+See `SECURITY.md` and `CHANGELOG.md` for boundaries and productization history.
